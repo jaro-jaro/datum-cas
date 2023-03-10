@@ -13,17 +13,10 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        aarMetadata {
-            minCompileSdk = 16
-        }
         minSdk = 16
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
-    }
-
-    testFixtures {
-        enable = true
     }
 
     buildTypes {
@@ -54,16 +47,33 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.0")
 }
 
-publishing {
-    publications {
-        register<MavenPublication>("release") {
-            groupId = "cz.jaro"
-            artifactId = "datum-cas"
-            version = "1.0"
 
-            afterEvaluate {
-                from(components["release"])
+val githubProperties = Properties()
+githubProperties.load(FileInputStream(rootProject.file("github.properties")))
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/jaro-jaro/datum-cas")
+            credentials {
+                username = githubProperties.get("gpr.user") as String? ?: ""
+                password = githubProperties.get("gpr.key") as String? ?: ""
             }
         }
     }
+    publications {
+        create<MavenPublication>("gpr") {
+            run {
+                groupId = "cz.jaro"
+                artifactId = "datum-cas"
+                version = "1.0.1"
+                artifact("$buildDir/outputs/aar/datum-cas-release.aar")
+            }
+        }
+    }
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
